@@ -1,6 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
+import { Montserrat } from "next/font/google";
+
+const montserrat = Montserrat({
+  subsets: ["latin"],
+  weight: ["300", "500"], // 300 = Light, 500 = Medium
+});
 
 export default function Registro() {
   const [form, setForm] = useState({
@@ -59,33 +66,51 @@ export default function Registro() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-sky-200 via-cyan-200 to-green-200 p-6">
+        <div className="relative min-h-screen flex items-center justify-center bg-[url('/img/fondo.jpeg')] bg-cover bg-center p-6">
 
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-md bg-white/80 backdrop-blur-md border border-white/40 p-10 rounded-3xl shadow-2xl flex flex-col gap-5"
-      >
-        <h1 className="text-3xl font-bold text-center text-gray-800">
-          Registro de Participante
-        </h1>
+        <form onSubmit={handleSubmit}
+       className="w-full max-w-md bg-blue-800/40 backdrop-blur-3xl border-blue-200/30 p-5 rounded-3xl shadow-2xl flex flex-col gap-5 border-3">
+
+            <div className="flex justify-end absolute top-8 right-7">
+               <Image
+                 src="/img/logo.png"
+                 alt="Registro de Participante"
+                 width={370} height={100}
+                 className="object-contain w-[106px] sm:w-[106px] md:w-[106px] lg:w-[106px]"
+               />
+             </div>
+
+
+           <div className="flex justify-center relative top-6">
+        <Image
+             src="/img/registro.png"
+             alt="Registro de Participante"
+             width={620}
+             height={120}
+             className="object-contain"
+           />
+         </div>
+
 
         {/* 🔵 PROMOTOR */}
-        <div className="flex flex-col gap-3">
-          <h2 className="text-gray-700 font-semibold">Promotor</h2>
+        <div className="flex flex-col gap-1 pl-5 pr-5">
+
+
+          <h2 className="`${montserrat.className} font-medium text-white-700 ml-4 text-xl">PASAJERO</h2>
 
           <input
             name="sellerId"
             value={form.sellerId}
             onChange={handleChange}
-            placeholder="DNI Promotor"
+            placeholder="D.N.I - Pasajero"
             required
-            className="border border-gray-200 p-3 rounded-lg focus:ring-2 focus:ring-sky-400 outline-none text-gray-700"
+            className="`${montserrat.className} font-light border-2 border-gray-200 p-3 rounded-[200px] focus:ring-2 focus:ring-sky-400 outline-none text-white-700"
           />
         </div>
 
         {/* 🟢 PARTICIPANTE */}
-        <div className="flex flex-col gap-3">
-          <h2 className="text-gray-700 font-semibold">Participante</h2>
+        <div className="flex flex-col gap-1 pl-5 pr-5">
+          <h2 className="`${montserrat.className} font-medium  text-white-700 ml-4 mb-0 text-xl">PARTICIPANTES</h2>
 
           <input
             name="name"
@@ -93,16 +118,16 @@ export default function Registro() {
             onChange={handleChange}
             placeholder="Nombre"
             required
-            className="border border-gray-200 p-3 rounded-lg focus:ring-2 focus:ring-sky-400 outline-none text-gray-700"
+            className="`${montserrat.className} font-light border-2 rounded-[200px] border-gray-200 p-3 focus:ring-2 focus:ring-sky-400 outline-none text-white-700"
           />
 
           <input
             name="dni"
             value={form.dni}
             onChange={handleChange}
-            placeholder="DNI Participante"
+            placeholder="D.N.I - Participante"
             required
-            className="border border-gray-200 p-3 rounded-lg focus:ring-2 focus:ring-sky-400 outline-none text-gray-700"
+            className="`${montserrat.className} font-light border-2 rounded-[200px] border-gray-200 p-3 focus:ring-2 focus:ring-sky-400 outline-none text-white-700"
           />
 
           <input
@@ -111,7 +136,7 @@ export default function Registro() {
             onChange={handleChange}
             placeholder="Edad"
             required
-            className="border border-gray-200 p-3 rounded-lg focus:ring-2 focus:ring-sky-400 outline-none text-gray-700"
+            className="`${montserrat.className} font-light border-2 rounded-[200px] border-gray-200 p-3 focus:ring-2 focus:ring-sky-400 outline-none text-white-700"
           />
 
           <input
@@ -120,7 +145,7 @@ export default function Registro() {
             onChange={handleChange}
             placeholder="Email"
             type="email"
-            className="border border-gray-200 p-3 rounded-lg focus:ring-2 focus:ring-sky-400 outline-none text-gray-700"
+            className="`${montserrat.className} font-light border-2 rounded-[200px] border-gray-200 p-3 focus:ring-2 focus:ring-sky-400 outline-none text-white-700"
           />
 
           <input
@@ -128,7 +153,7 @@ export default function Registro() {
             value={form.phone}
             onChange={handleChange}
             placeholder="Teléfono"
-            className="border border-gray-200 p-3 rounded-lg focus:ring-2 focus:ring-sky-400 outline-none text-gray-700"
+            className="`${montserrat.className} font-light border-2 rounded-[200px] border-gray-200 p-3 focus:ring-2 focus:ring-sky-400 outline-none text-white-700"
           />
         </div>
 
@@ -146,13 +171,27 @@ export default function Registro() {
         )}
 
         {/* BOTÓN */}
-        <button
-          type="submit"
-          disabled={loading}
-          className="bg-gradient-to-r from-sky-500 to-green-400 text-white font-semibold p-3 rounded-xl shadow-md hover:scale-105 hover:shadow-lg transition"
-        >
-          {loading ? "Registrando..." : "Registrar"}
-        </button>
+      <button className="relative flex justify-center cursor-pointer group">
+
+         {/* Imagen normal */}
+         <Image
+           src="/img/registrar.png"
+           alt="Registrar"
+           width={420}
+           height={50}
+           className="object-contain group-hover:opacity-0 transition duration-300"
+         />
+
+         {/* Imagen hover */}
+         <Image
+           src="/img/registrarhover.png"
+           alt="Registrar hover"
+           width={420}
+           height={50}
+           className="object-contain absolute top-0 left-0 opacity-0 group-hover:opacity-100 transition duration-300"
+         />
+
+       </button>
       </form>
     </div>
   );

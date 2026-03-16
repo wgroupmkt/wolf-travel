@@ -3,9 +3,15 @@
 import { useEffect, useState } from "react";
 import * as XLSX from "xlsx";
 
+type Participant = {
+  name: string;
+  age: number;
+};
+
 type Promoter = {
   id: string;
   totalParticipants?: number;
+  participants?: Participant[];
 };
 
 export default function PromotersPage() {
@@ -23,13 +29,16 @@ export default function PromotersPage() {
 
   const descargarExcel = () => {
     const dataFormateada = promoters.map((p) => ({
-      DNI: p.id,
-      "Total Participantes": p.totalParticipants || 0,
-      Estado:
-        (p.totalParticipants || 0) > 0
-          ? "Activo"
-          : "Sin participantes",
-    }));
+    DNI: p.id,
+    "Total Participantes": p.totalParticipants || 0,
+    Participantes: p.participants
+    ?.map((part) => `${part.name} (${part.age})`)
+    .join(", ") || "Sin participantes",
+    Estado:
+      (p.totalParticipants || 0) > 0
+        ? "Activo"
+       : "Sin participantes",
+   }));
 
     const worksheet = XLSX.utils.json_to_sheet(dataFormateada);
     const workbook = XLSX.utils.book_new();
@@ -70,12 +79,13 @@ export default function PromotersPage() {
           <table className="w-full border-collapse">
 
             <thead>
-              <tr className="bg-sky-100 text-gray-700 text-sm uppercase tracking-wider">
-                <th className="text-left px-6 py-4">DNI</th>
-                <th className="text-left px-6 py-4">Total Participantes</th>
-                <th className="text-left px-6 py-4">Estado</th>
-              </tr>
-            </thead>
+             <tr className="bg-sky-100 text-gray-700 text-sm uppercase tracking-wider">
+               <th className="text-left px-6 py-4">DNI</th>
+               <th className="text-left px-6 py-4">Total Participantes</th>
+               <th className="text-left px-6 py-4">Participantes</th>
+               <th className="text-left px-6 py-4">Estado</th>
+             </tr>
+             </thead>
 
             <tbody>
               {promoters.map((promoter) => (
@@ -92,6 +102,20 @@ export default function PromotersPage() {
                     {promoter.totalParticipants || 0}
                   </td>
 
+                  <td className="px-6 py-4 text-gray-700">
+
+                      {promoter.participants?.length ? (
+                        promoter.participants.map((p, index) => (
+                          <div key={index} className="text-sm">
+                            {p.name} - {p.age} años
+                          </div>
+                        ))
+                      ) : (
+                        "Sin participantes"
+                      )}
+                    
+                    </td>
+
                   <td className="px-6 py-4">
                     <span
                       className={`px-4 py-1 text-xs rounded-full font-semibold ${
@@ -105,6 +129,7 @@ export default function PromotersPage() {
                         : "Sin participantes"}
                     </span>
                   </td>
+
 
                 </tr>
               ))}
