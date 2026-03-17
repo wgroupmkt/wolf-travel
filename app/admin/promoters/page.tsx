@@ -1,185 +1,153 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import * as XLSX from "xlsx";
+import Image from "next/image";
+import { Montserrat } from "next/font/google";
 
-type Participant = {
-name: string;
-age: number;
-numeroSorteo: number;
-};
-
-type Promoter = {
-id: string;
-participants: Participant[];
-};
-
-export default function PromotersPage() {
-const [promoters, setPromoters] = useState<Promoter[]>([]);
-const [search, setSearch] = useState("");
-
-useEffect(() => {
-fetch("/api/promoters")
-.then((res) => res.json())
-.then((data) => {
-setPromoters(data);
+const montserrat = Montserrat({
+  subsets: ["latin"],
+  weight: ["300", "500"],
 });
-}, []);
 
-// FILTRO POR DNI
-const filteredPromoters = promoters.filter((p) =>
-p.id.toLowerCase().includes(search.toLowerCase())
-);
+export default function Admin() {
+  const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState(""); // ✅ AHORA ESTÁ BIEN
 
-// EXCEL POR PROMOTOR
-const descargarExcelPromotor = (promoter: Promoter) => {
-const rows = promoter.participants.map((p) => ({
-Promotor: promoter.id,
-Nombre: p.name,
-Edad: p.age,
-NumeroSorteo: p.numeroSorteo,
-}));
-
-};
-
-// EXCEL GENERAL
-const descargarExcelGeneral = () => {
-
-  const rows = [];
-
-  promoters.forEach((promoter) => {
-
-    promoter.participants?.forEach((p) => {
-
-      rows.push({
-        DNI: promoter.id,
-        Nombre: p.name,
-        Edad: p.age,
-        NumeroSorteo: p.numeroSorteo
+  useEffect(() => {
+    fetch("/api/admin")
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("DATA:", data);
+        setData(data.passengers || []);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("ERROR FRONT:", err);
+        setLoading(false);
       });
+  }, []);
 
-    });
+  // 🔍 FILTRO POR DNI + NOMBRE + N° SORTEO
+  const filteredData = data.filter((p) =>
+    p.id.toString().includes(search) ||
+    p.participants.some((part: any) =>
+      part.name?.toLowerCase().includes(search.toLowerCase()) ||
+      part.numeroSorteo?.toString().includes(search)
+    )
+  );
 
-  });
+  return (
+    <div className="relative min-h-screen flex items-center justify-center p-6">
 
-  if (rows.length === 0) {
-    alert("No hay datos para exportar");
-    return;
-  }
-
-  const worksheet = XLSX.utils.json_to_sheet(rows);
-  const workbook = XLSX.utils.book_new();
-
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Participantes");
-
-  XLSX.writeFile(workbook, "participantes.xlsx");
-
-};
-
-return ( <div className="min-h-screen bg-gradient-to-br from-sky-200 via-cyan-200 to-green-200 p-10">
-
-```
-  <div className="max-w-6xl mx-auto">
-
-    <div className="flex justify-between items-center mb-8">
-
-      <h1 className="text-3xl font-bold text-gray-800">
-        Pasajeros Registrados
-      </h1>
-
-      <button
-        onClick={descargarExcelGeneral}
-        className="bg-green-500 text-white px-6 py-3 rounded-lg font-semibold hover:scale-105 transition"
+      {/* 🎥 VIDEO FONDO */}
+      <video
+        className="absolute top-0 left-0 w-full h-full object-cover"
+        autoPlay
+        muted
+        loop
+        playsInline
       >
-        Descargar Excel General
-      </button>
+        <source src="/video/wolf.mp4" type="video/mp4" />
+      </video>
 
-    </div>
+      {/* 🌫️ OVERLAY */}
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
 
-    {/* BUSCADOR */}
+      {/* 📦 CONTENEDOR */}
+      <div className="relative w-full max-w-5xl bg-blue-900/40 backdrop-blur-2xl border border-white/20 rounded-3xl p-6 shadow-2xl">
 
-    <input
-      type="text"
-      placeholder="Buscar por DNI..."
-      value={search}
-      onChange={(e) => setSearch(e.target.value)}
-      className="w-100 mb-8 px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-400 text-gray-700"
-    />
-
-    {/* TARJETAS PROMOTORES */}
-
-    <div className="grid md:grid-cols-2 gap-8">
-
-      {filteredPromoters.map((promoter) => (
-
-        <div
-          key={promoter.id}
-          className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-6"
-        >
-
-          <div className="flex justify-between items-center mb-4">
-
-            <div>
-
-              <h2 className="text-xl font-bold text-gray-800">
-                DNI: {promoter.id}
-              </h2>
-
-              <p className="text-sm text-gray-600">
-                Participantes: {promoter.participants.length}
-              </p>
-
-            </div>
-
-            <button
-              onClick={() => descargarExcelPromotor(promoter)}
-              className="bg-sky-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:scale-105 transition"
-            >
-              Excel
-            </button>
-
-          </div>
-
-          <table className="w-full text-sm">
-
-            <thead>
-              <tr className="bg-sky-100 text-gray-700">
-                <th className="px-4 py-2 text-left">Nombre</th>
-                <th className="px-4 py-2 text-left">Edad</th>
-                <th className="px-4 py-2 text-left">Nº Sorteo</th>
-              </tr>
-            </thead>
-
-            <tbody>
-
-              {promoter.participants.map((p, index) => (
-
-                <tr key={index} className="border-b">
-
-                  <td className="px-4 py-2 text-gray-700">{p.name}</td>
-
-                  <td className="px-4 py-2 text-gray-700">{p.age}</td>
-
-                  <td className="px-4 py-2 font-semibold text-sky-700">
-                    {p.numeroSorteo}
-                  </td>
-
-                </tr>
-
-              ))}
-
-            </tbody>
-
-          </table>
-
+        {/* 🧠 LOGO */}
+        <div className="flex justify-end mb-4">
+          <Image
+            src="/img/logo.png"
+            alt="Logo"
+            width={100}
+            height={40}
+          />
         </div>
 
-      ))}
+        {/* 🏷️ TÍTULO */}
+        <h1 className={`${montserrat.className} text-white text-2xl text-center mb-6`}>
+          Panel Administrador
+        </h1>
 
+        {/* 🔍 BUSCADOR */}
+        <div className="relative mb-6">
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300">
+            🔍
+          </span>
+
+          <input
+            type="text"
+            placeholder="Buscar por DNI, nombre o sorteo..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-3 rounded-full bg-white/10 border border-white/20 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
+        </div>
+
+        {/* 🔄 LOADING */}
+        {loading && (
+          <p className="text-white text-center">Cargando datos...</p>
+        )}
+
+        {/* ❌ SIN DATOS */}
+        {!loading && filteredData.length === 0 && (
+          <p className="text-white text-center">
+            No hay resultados
+          </p>
+        )}
+
+        {/* 📊 LISTA */}
+        <div className="flex flex-col gap-4 max-h-[500px] overflow-y-auto">
+
+          {filteredData.map((p) => (
+            <div
+              key={p.id}
+              className="bg-white/10 border border-white/20 rounded-xl p-4"
+            >
+              {/* CABECERA */}
+              <div className="flex justify-between">
+                <h2 className="text-white font-medium">
+                  DNI: {p.id}
+                </h2>
+
+                <span className="text-sm bg-blue-500 px-3 py-1 rounded-full text-white">
+                  {p.totalParticipants} participantes
+                </span>
+              </div>
+
+              {/* PARTICIPANTES */}
+              <div className="mt-3 flex flex-col gap-2">
+
+                {p.participants.length === 0 && (
+                  <p className="text-gray-300 text-sm">
+                    Sin participantes
+                  </p>
+                )}
+
+                {p.participants.map((part: any, i: number) => (
+                  <div
+                    key={i}
+                    className="flex justify-between bg-white/5 p-2 rounded-lg text-white text-sm"
+                  >
+                    <span>
+                      {part.name} ({part.age})
+                    </span>
+
+                    <span className="text-blue-300">
+                      #{part.numeroSorteo || "—"}
+                    </span>
+                  </div>
+                ))}
+
+              </div>
+            </div>
+          ))}
+
+        </div>
+      </div>
     </div>
-
-  </div>
-
-</div>
-);
+  );
 }

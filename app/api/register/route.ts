@@ -1,121 +1,88 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/firebaseAdmin";
-import admin from "firebase-admin";
+import { Resend } from "resend";
 
-// 🔢 Generar número único
-async function generateUniqueNumber() {
-  let number = 0;
-  let exists = true;
-
-  while (exists) {
-    number = Math.floor(1000 + Math.random() * 9000);
-
-    const raffleRef = db.collection("raffleNumbers").doc(number.toString());
-    const raffleDoc = await raffleRef.get();
-
-    if (!raffleDoc.exists) {
-      exists = false;
-
-      await raffleRef.set({
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
-    }
-  }
-
-  return number;
-}
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req: Request) {
   try {
+    const { sellerId, name, dni, edad, email, phone } =
+      await req.json();
 
-    const { sellerId, name, dni, edad, email, phone } = await req.json();
-
-    if (!sellerId || !name || !dni || !edad) {
+    if (!sellerId || !name || !dni) {
       return NextResponse.json({
         success: false,
         error: "Faltan datos obligatorios",
       });
     }
 
-    const promoterRef = db.collection("promoters").doc(sellerId);
-    const promoterDoc = await promoterRef.get();
+    const passengerRef = db.collection("passengers").doc(sellerId);
 
-    // 🧑‍💼 crear promotor si no existe
-    if (!promoterDoc.exists) {
-      await promoterRef.set({
-        dni: sellerId,
+    const passengerDoc = await passengerRef.get();
+
+    if (!passengerDoc.exists) {
+      await passengerRef.set({
+        name: `Pasajero ${sellerId}`,
         totalParticipants: 0,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: new Date(),
       });
     }
 
-    // 📊 contar participantes
-    const participantsSnapshot = await promoterRef
-      .collection("participants")
-      .get();
+    // 🎟 NUMERO DE SORTEO
+    const raffleNumber = Date.now().toString().slice(-6);
 
-    if (participantsSnapshot.size >= 50) {
-      return NextResponse.json({
-        success: false,
-        error: "Este promotor ya alcanzó el máximo de 50 participantes",
-      });
-    }
+    const participantRef = passengerRef.collection("participants").doc();
 
-    // 🔍 validar DNI duplicado
-    const existingParticipant = await promoterRef
-      .collection("participants")
-      .where("dni", "==", dni)
-      .get();
-
-    if (!existingParticipant.empty) {
-      return NextResponse.json({
-        success: false,
-        error: "Este DNI ya está registrado con este promotor",
-      });
-    }
-
-    const raffleNumber = await generateUniqueNumber();
-
-    // 👤 guardar participante
-    await promoterRef.collection("participants").add({
+    await participantRef.set({
       name,
+      edad: Number(edad),
       dni,
-      edad,
       email: email || "",
       phone: phone || "",
-      raffleNumber,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      numeroSorteo: raffleNumber,
+      createdAt: new Date(),
     });
 
-    // ➕ sumar participante al promotor
-    await promoterRef.update({
-      totalParticipants: admin.firestore.FieldValue.increment(1),
+    // 🔢 ACTUALIZAR CONTADOR
+    const currentTotal = passengerDoc.data()?.totalParticipants || 0;
+
+    await passengerRef.update({
+      totalParticipants: currentTotal + 1,
     });
 
-    // 📧 cola de email
+    // 📩 ENVIAR EMAIL (solo si hay email)
     if (email) {
-      await db.collection("emailQueue").add({
-        email,
-        name,
-        raffleNumber,
-        status: "pending",
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
+      try {
+        await resend.emails.send({
+          from: "Registro <onboarding@resend.dev>", // ⚠️ cambiar luego
+          to: email,
+          subject: "Tu número de sorteo 🎟",
+          html: `
+            <div style="font-family: Arial; padding:20px;">
+              <h2>¡Registro exitoso!</h2>
+              <p>Hola ${name},</p>
+              <p>Tu número de sorteo es:</p>
+              <h1 style="color:#2563eb;">${raffleNumber}</h1>
+              <p>¡Mucha suerte! 🍀</p>
+            </div>
+          `,
+        });
+      } catch (error) {
+        console.error("Error enviando email:", error);
+      }
     }
 
     return NextResponse.json({
       success: true,
-      raffleNumber,
+      numeroSorteo: raffleNumber,
     });
 
   } catch (error) {
-
     console.error("ERROR REGISTER:", error);
 
     return NextResponse.json({
       success: false,
       error: "Error en el servidor",
     });
-
   }
 }

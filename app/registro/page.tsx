@@ -40,7 +40,7 @@ export default function Registro() {
 
       if (data.success) {
         setSuccessMessage(
-          `🎉 Registro exitoso! N° de sorteo: ${data.raffleNumber}`
+          `🎉 Registro exitoso! N° de sorteo: ${data.numeroSorteo}`
         );
 
         setForm({
@@ -66,10 +66,21 @@ export default function Registro() {
   }
 
   return (
-        <div className="relative min-h-screen flex items-center justify-center bg-[url('/img/fondo.jpeg')] bg-cover bg-center p-6">
+        <div className="relative min-h-screen flex items-center justify-center bg-cover bg-center p-6">
+
+           <video 
+              className="absolute top-0 left-0 w-full h-full object-cover"
+              autoPlay 
+              muted 
+              loop 
+              playsInline
+            >
+              <source src="/video/wolf.mp4" type="video/mp4" />
+            </video>
+          
 
         <form onSubmit={handleSubmit}
-       className="w-full max-w-md bg-blue-800/40 backdrop-blur-3xl border-blue-200/30 p-5 rounded-3xl shadow-2xl flex flex-col gap-5 border-3">
+       className="w-full flex justify-center max-w-md bg-blue-800/40 backdrop-blur-3xl border-blue-200/30 p-5 rounded-3xl shadow-2xl flex flex-col gap-5 border-3">
 
             <div className="flex justify-end absolute top-8 right-7">
                <Image
@@ -159,8 +170,8 @@ export default function Registro() {
 
         {/* MENSAJES */}
         {successMessage && (
-          <div className="bg-green-200 text-green-800 p-3 rounded-lg text-sm font-medium">
-            {successMessage}
+          <div className="mx-auto bg-green-200 text-green-800 text-center p-3 rounded-lg text-sm font-medium w-full max-w-xs">
+               {successMessage}
           </div>
         )}
 
