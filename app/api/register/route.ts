@@ -2,7 +2,14 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/firebaseAdmin";
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// ✅ Validar API KEY antes de usarla
+const resendApiKey = process.env.RESEND_API_KEY;
+
+if (!resendApiKey) {
+  console.error("❌ RESEND_API_KEY no está definida");
+}
+
+const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
 export async function POST(req: Request) {
   try {
@@ -17,7 +24,6 @@ export async function POST(req: Request) {
     }
 
     const passengerRef = db.collection("passengers").doc(sellerId);
-
     const passengerDoc = await passengerRef.get();
 
     if (!passengerDoc.exists) {
@@ -50,11 +56,11 @@ export async function POST(req: Request) {
       totalParticipants: currentTotal + 1,
     });
 
-    // 📩 ENVIAR EMAIL (solo si hay email)
-    if (email) {
+    // 📩 ENVIAR EMAIL (solo si hay email y API key)
+    if (email && resend) {
       try {
         await resend.emails.send({
-          from: "Registro <registro@promo.agustinescuderoweb.com>", // ⚠️ cambiar luego
+          from: "Registro <onboarding@resend.dev>",
           to: email,
           subject: "Tu número de sorteo 🎟",
           html: `
@@ -68,8 +74,10 @@ export async function POST(req: Request) {
           `,
         });
       } catch (error) {
-        console.error("Error enviando email:", error);
+        console.error("❌ Error enviando email:", error);
       }
+    } else {
+      console.log("⚠️ Email no enviado (falta email o API key)");
     }
 
     return NextResponse.json({
@@ -78,7 +86,7 @@ export async function POST(req: Request) {
     });
 
   } catch (error) {
-    console.error("ERROR REGISTER:", error);
+    console.error("❌ ERROR REGISTER:", error);
 
     return NextResponse.json({
       success: false,
