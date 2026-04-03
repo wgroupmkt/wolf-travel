@@ -12,7 +12,7 @@ export async function generarImagen(numero: string) {
   ctx.drawImage(image, 0, 0);
 
   // estilo texto
-  ctx.font = "bold 70px Arial";
+  ctx.font = "70px sans-serif";
   ctx.fillStyle = "#ffffff";
   ctx.textAlign = "center";
 
