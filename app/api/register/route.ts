@@ -13,12 +13,13 @@ if (!resendApiKey) {
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
 
+
+
 export async function POST(req: Request) {
   try {
-    const { sellerId, name, dni, edad, email, phone } =
-      await req.json();
+    const { sellerId, name, dni, fechaNacimiento, email, phone } = await req.json();
 
-    if (!sellerId || !name || !dni) {
+    if (!sellerId || !name || !dni || !fechaNacimiento)  {
       return NextResponse.json({
         success: false,
         error: "Faltan datos obligatorios",
@@ -41,9 +42,25 @@ export async function POST(req: Request) {
 
     const participantRef = passengerRef.collection("participants").doc();
 
+    function calcularEdad(fecha: string) {
+    const hoy = new Date();
+    const nacimiento = new Date(fecha);
+    let edad = hoy.getFullYear() - nacimiento.getFullYear();
+    const m = hoy.getMonth() - nacimiento.getMonth();
+
+    if (m < 0 || (m === 0 && hoy.getDate() < nacimiento.getDate())) {
+      edad--;
+    }
+
+    return edad;
+   }
+
+    const edadCalculada = calcularEdad(fechaNacimiento);
+
     await participantRef.set({
       name,
-      edad: Number(edad),
+      fechaNacimiento,
+      edad: edadCalculada,
       dni,
       email: email || "",
       phone: phone || "",
