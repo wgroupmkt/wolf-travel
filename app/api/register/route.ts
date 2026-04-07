@@ -12,14 +12,11 @@ if (!resendApiKey) {
 
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
-
-
-
 export async function POST(req: Request) {
   try {
     const { sellerId, name, dni, fechaNacimiento, email, phone } = await req.json();
 
-    if (!sellerId || !name || !dni || !fechaNacimiento)  {
+    if (!sellerId || !name || !dni || !fechaNacimiento) {
       return NextResponse.json({
         success: false,
         error: "Faltan datos obligatorios",
@@ -42,21 +39,49 @@ export async function POST(req: Request) {
 
     const participantRef = passengerRef.collection("participants").doc();
 
+    // 🎂 CALCULAR EDAD
     function calcularEdad(fecha: string) {
-    const hoy = new Date();
-    const nacimiento = new Date(fecha);
-    let edad = hoy.getFullYear() - nacimiento.getFullYear();
-    const m = hoy.getMonth() - nacimiento.getMonth();
+      const hoy = new Date();
+      const nacimiento = new Date(fecha);
+      let edad = hoy.getFullYear() - nacimiento.getFullYear();
+      const m = hoy.getMonth() - nacimiento.getMonth();
 
-    if (m < 0 || (m === 0 && hoy.getDate() < nacimiento.getDate())) {
-      edad--;
+      if (m < 0 || (m === 0 && hoy.getDate() < nacimiento.getDate())) {
+        edad--;
+      }
+
+      return edad;
     }
-
-    return edad;
-   }
 
     const edadCalculada = calcularEdad(fechaNacimiento);
 
+    // 🔒 VALIDACIÓN: máximo 15 participaciones por DNI por mes
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(
+      now.getFullYear(),
+      now.getMonth() + 1,
+      0,
+      23,
+      59,
+      59
+    );
+
+    const snapshot = await db
+      .collectionGroup("participants") // 🔥 busca en todas las subcolecciones
+      .where("dni", "==", dni)
+      .where("createdAt", ">=", startOfMonth)
+      .where("createdAt", "<=", endOfMonth)
+      .get();
+
+    if (snapshot.size >= 15) {
+      return NextResponse.json({
+        success: false,
+        error: "Ya alcanzaste el máximo de 15 participaciones este mes 😅",
+      });
+    }
+
+    // 💾 GUARDAR PARTICIPANTE
     await participantRef.set({
       name,
       fechaNacimiento,
@@ -75,33 +100,33 @@ export async function POST(req: Request) {
       totalParticipants: currentTotal + 1,
     });
 
-    // 🔥 GENERÁS LA IMAGEN (ACÁ VA)
+    // 🔥 GENERAR IMAGEN
     const bufferImagen = await generarImagen(raffleNumber.toString());
 
-    // 📩 ENVIAR EMAIL (solo si hay email y API key)
+    // 📩 ENVIAR EMAIL
     if (email && resend) {
       try {
         await resend.emails.send({
-  from: "Registro <info@bono.wolftravel.com.ar>",
-  to: email,
-  subject: "Tu número de sorteo 🎟",
-  html:`
-    <div style="font-family: Arial; padding:20px;">
-      <h2>¡Registro exitoso!</h2>
-      <p>Hola ${name}, gracias por ayudarme con mi viajes de egresados 💙🐺</p>
-      <p>Tu número de sorteo es:</p>
-      <h1 style="color:#2563eb;">${raffleNumber}</h1>
-      <img src="cid:sorteo" style="max-width:100%;" />
-    </div>
-  `,
-  attachments: [
-    {
-      filename: "sorteo.png",
-      content: bufferImagen,
-      cid:"sorteo", // 🔥 IMPORTANTE (tiene que coincidir con el img)
-    } as any,
-  ],
-});
+          from: "Registro <info@bono.wolftravel.com.ar>",
+          to: email,
+          subject: "Tu número de sorteo 🎟",
+          html: `
+            <div style="font-family: Arial; padding:20px;">
+              <h2>¡Registro exitoso!</h2>
+              <p>Hola ${name}, gracias por ayudarme con mi viaje de egresados 💙🐺</p>
+              <p>Tu número de sorteo es:</p>
+              <h1 style="color:#2563eb;">${raffleNumber}</h1>
+              <img src="cid:sorteo" style="max-width:100%;" />
+            </div>
+          `,
+          attachments: [
+            {
+              filename: "sorteo.png",
+              content: bufferImagen,
+              cid: "sorteo",
+            } as any,
+          ],
+        });
       } catch (error) {
         console.error("❌ Error enviando email:", error);
       }
