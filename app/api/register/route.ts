@@ -78,7 +78,7 @@ export async function POST(req: Request) {
     }
 
       // 🎟 NUMERO DE SORTEO
-       let raffleNumber = Date.now().toString().slice(-5);
+       let raffleNumber = Date.now().toString().slice(-7);
 
        if (raffleNumber.startsWith("0")) {
        raffleNumber = "1" + raffleNumber.slice(1);
