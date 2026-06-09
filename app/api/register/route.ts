@@ -52,30 +52,37 @@ export async function POST(req: Request) {
     const edadCalculada = calcularEdad(fechaNacimiento);
 
     // 🔒 VALIDACIÓN: máximo 15 participaciones por DNI por mes
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = new Date(
-      now.getFullYear(),
-      now.getMonth() + 1,
-      0,
-      23,
-      59,
-      59
-    );
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(
+          now.getFullYear(),
+           now.getMonth() + 1,
+           0,
+          23,
+           59,
+           59
+        );
 
-    const snapshot = await db
-      .collectionGroup("participants") // 🔥 busca en todas las subcolecciones
-      .where("dni", "==", dni)
-      .where("createdAt", ">=", startOfMonth)
-      .where("createdAt", "<=", endOfMonth)
-      .get();
+        const snapshot = await db
+          .collectionGroup("participants")
+          .where("dni", "==", dni)
+          .where("createdAt", ">=", startOfMonth)
+         .where("createdAt", "<=", endOfMonth)
+          .get();
 
-    if (snapshot.size > 14) {
-      return NextResponse.json({
-        success: false,
-        error: "Ya alcanzaste el máximo de 15 participaciones este mes 😅",
-      });
-    }
+       // 👇 DNI que tendrá 30 participaciones
+       const DNI_EXCEPCION = "50713653";
+
+       // 👇 Si coincide el DNI => 30, sino => 15
+       const limiteParticipaciones =
+         dni === DNI_EXCEPCION ? 30 : 15;
+
+       if (snapshot.size >= limiteParticipaciones) {
+         return NextResponse.json({
+           success: false,
+           error: `Ya alcanzaste el máximo de ${limiteParticipaciones} participaciones este mes 😅`,
+         });
+       }
 
       // 🎟 NUMERO DE SORTEO
        let raffleNumber = Date.now().toString().slice(-7);
