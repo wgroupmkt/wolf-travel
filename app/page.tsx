@@ -183,16 +183,17 @@ export default function Registro() {
              pattern="[0-9]*"
             className={`${montserrat.className} font-light border-2 border-gray-200 p-3 rounded-[200px] focus:ring-2 focus:ring-sky-400 outline-none text-white-700`}
           />
-            
-          <input
-            type="date"
-            name="fechaNacimiento"
-            value={form.fechaNacimiento}
-            onChange={handleChange}
-            required
-            className={`${montserrat.className} font-light border-2 border-gray-200 p-3 rounded-[200px] focus:ring-2 focus:ring-sky-400 outline-none text-white-700`}
-           />
 
+          <input
+              type={form.fechaNacimiento ? "date" : "text"}
+              placeholder="Fecha de nacimiento"
+              value={form.fechaNacimiento}
+              onFocus={(e) => (e.target.type = "date")}
+              onChange={handleChange}
+              name="fechaNacimiento"
+              className="border-2 border-gray-200 p-3 rounded-full"
+            />
+            
           <input
             name="email"
             value={form.email}
