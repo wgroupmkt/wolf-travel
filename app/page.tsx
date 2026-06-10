@@ -191,7 +191,7 @@ export default function Registro() {
               onFocus={(e) => (e.target.type = "date")}
               onChange={handleChange}
               name="fechaNacimiento"
-              className="border-2 border-gray-200 p-3 rounded-full"
+              className={`${montserrat.className} font-light border-2 border-gray-200 p-3 rounded-[200px] focus:ring-2 focus:ring-sky-400 outline-none text-white-700`}
             />
             
           <input
