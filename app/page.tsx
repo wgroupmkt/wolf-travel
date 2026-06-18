@@ -51,8 +51,9 @@ export default function Registro() {
     const data = await res.json();
 
     if (data.success) {
-      setSuccessMessage("Registro exitoso 🎉");
-
+      setSuccessMessage(
+         `🎉 Registro exitoso! Tu número de sorteo es: ${data.numeroSorteo}`
+     );
       setForm({
         sellerId: "",
         name: "",
