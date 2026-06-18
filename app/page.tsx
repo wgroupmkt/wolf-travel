@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Image from "next/image";
 import { Montserrat } from "next/font/google";
+import { Turnstile } from "@marsidev/react-turnstile";
+
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -10,6 +12,7 @@ const montserrat = Montserrat({
 });
 
 export default function Registro() {
+  const [token, setToken] = useState("");
   const [form, setForm] = useState({
   sellerId: "",
   name: "",
@@ -26,43 +29,50 @@ export default function Registro() {
   const [errorMessage, setErrorMessage] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setErrorMessage("");
-    setSuccessMessage("");
+  e.preventDefault();
 
-    try {
-      const res = await fetch("/api/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+  if (!token) {
+    setErrorMessage("Por favor verifica que no eres un robot");
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    const res = await fetch("/api/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...form,
+        turnstileToken: token,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      setSuccessMessage("Registro exitoso 🎉");
+
+      setForm({
+        sellerId: "",
+        name: "",
+        dni: "",
+        edad: "",
+        email: "",
+        phone: "",
+        fechaNacimiento: "",
       });
 
-      const data = await res.json();
-
-      if (data.success) {
-        setSuccessMessage(
-          `🎉 Registro exitoso! N° de sorteo: ${data.numeroSorteo}`
-        );
-
-         setForm({
-          sellerId: "",
-          name: "",
-          dni: "",
-          edad: "",
-          fechaNacimiento: "",
-          email: "",
-          phone: "",
-        });
-      } else {
-        setErrorMessage(data.error || "Ocurrió un error");
-      }
-    } catch (error) {
-      setErrorMessage("Error de conexión con el servidor");
+      setToken("");
+    } else {
+      setErrorMessage(data.error || "Error");
     }
-
-    setLoading(false);
+  } catch (err) {
+    setErrorMessage("Error de conexión");
   }
+
+  setLoading(false);
+}
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
   const { name, value } = e.target;
@@ -226,7 +236,17 @@ export default function Registro() {
         )}
 
         {/* BOTÓN */}
-      <button className="relative flex justify-center cursor-pointer group">
+      
+      <Turnstile
+           siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
+           onSuccess={(token) => setToken(token)}
+           onExpire={() => setToken("")}
+       />
+
+      <button className="relative flex justify-center cursor-pointer group"  
+              type="submit"
+              disabled={!token || loading}
+              >
 
          {/* Imagen normal */}
          <Image

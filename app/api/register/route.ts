@@ -14,7 +14,45 @@ const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
 export async function POST(req: Request) {
   try {
-    const { sellerId, name, dni, fechaNacimiento, email, phone } = await req.json();
+    const {
+       sellerId,
+       name,
+       dni,
+       fechaNacimiento,
+       email,
+       phone,
+       turnstileToken,
+    } = await req.json();
+
+    if (!turnstileToken) {
+  return NextResponse.json({
+    success: false,
+    error: "Falta verificación de seguridad",
+  });
+}
+
+  const verifyResponse = await fetch(
+  "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: new URLSearchParams({
+      secret: process.env.TURNSTILE_SECRET_KEY!,
+      response: turnstileToken,
+    }),
+  }
+);
+
+   const verifyResult = await verifyResponse.json();
+
+    if (!verifyResult.success) {
+      return NextResponse.json({
+        success: false,
+        error: "Verificación de seguridad fallida",
+      });
+    }
 
     if (!sellerId || !name || !dni || !fechaNacimiento) {
       return NextResponse.json({

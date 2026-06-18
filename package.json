@@ -9,6 +9,7 @@
     "lint": "echo \"Skipping lint\""
   },
   "dependencies": {
+    "@marsidev/react-turnstile": "^1.5.3",
     "canvas": "^3.2.3",
     "dotenv": "^17.3.1",
     "firebase-admin": "^13.7.0",
