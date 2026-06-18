@@ -237,11 +237,12 @@ export default function Registro() {
 
         {/* BOTÓN */}
       
-      <Turnstile
-           siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
-           onSuccess={(token) => setToken(token)}
-           onExpire={() => setToken("")}
-       />
+      
+      <Turnstile className="flex justify-center"
+        siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
+        onSuccess={(token) => setToken(token)}
+        onExpire={() => setToken("")}
+      />
 
       <button className="relative flex justify-center cursor-pointer group"  
               type="submit"
